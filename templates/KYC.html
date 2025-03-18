@@ -1,0 +1,309 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Employee KYC Verification</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
+    body { display: flex; height: 100vh; background: #f4f4f4; }
+    .sidebar {
+      width: 250px;
+      background: #2C3E50;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+    }
+    .sidebar img { width: 200px; margin-bottom: 20px; }
+    .nav-button {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 10px;
+      background: #34495E;
+      color: white;
+      text-align: center;
+      border: none;
+      cursor: pointer;
+      font-size: 16px;
+      transition: 0.3s;
+    }
+    .nav-button:hover, .nav-button.active { background: #1ABC9C; }
+    .main-container { flex: 1; padding: 20px; overflow-y: auto; }
+    header { background: #4a90e2; padding: 20px; text-align: center; color: #fff; margin-bottom: 20px; }
+    .content-container { display: flex; gap: 20px; }
+    .table-container { flex: 2; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); overflow-x: auto; }
+    .image-preview-container {
+      flex: 1; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    .filters {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 15px;
+    }
+    select {
+      padding: 8px;
+      width: 150px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 10px; border: 1px solid #ddd; text-align: center; }
+    th { background-color: #f2f2f2; }
+    tr:nth-child(even) { background: #fafafa; }
+    tr:hover { background-color: #d1ecf1; cursor: pointer; }
+    button {
+      padding: 8px 12px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .yes-btn { background-color: #28a745; color: #fff; }
+    .no-btn { background-color: #dc3545; color: #fff; }
+    .image-item { text-align: center; margin-bottom: 10px; }
+    .image-item img {
+      width: 100%;
+      max-width: 200px;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    .image-item img:hover { transform: scale(1.1); }
+  </style>
+
+  {% comment %} <script>
+    let employees = [
+      { id: "001", name: "Amit Sharma", doj: "2022-05-10", dob: "1990-08-15", mobile: "9876543210", pan: "ABCDE1234F", aadhar: "123456789012", division: "North", region: "Delhi", branch: "Connaught Place", panImg: "pan1.jpg", aadharFront: "aadhar1_front.jpg", aadharBack: "aadhar1_back.jpg" },
+      { id: "002", name: "Neha Verma", doj: "2021-11-20", dob: "1995-03-22", mobile: "9876543211", pan: "ABCDE5678G", aadhar: "987654321098", division: "South", region: "Bangalore", branch: "MG Road", panImg: "pan2.jpg", aadharFront: "aadhar2_front.jpg", aadharBack: "aadhar2_back.jpg" },
+    ];
+
+    function filterEmployees() {
+      let selectedDivision = document.getElementById("divisionFilter").value;
+      let selectedRegion = document.getElementById("regionFilter").value;
+      let selectedBranch = document.getElementById("branchFilter").value;
+
+      let filtered = employees.filter(emp =>
+        (selectedDivision === "" || emp.division === selectedDivision) &&
+        (selectedRegion === "" || emp.region === selectedRegion) &&
+        (selectedBranch === "" || emp.branch === selectedBranch)
+      );
+
+      displayEmployees(filtered);
+    }
+
+    function displayEmployees(employeeList) {
+      let tbody = document.getElementById("employeeTableBody");
+      tbody.innerHTML = "";
+      employeeList.forEach(emp => {
+        let row = `<tr onclick="updateImagePreview('${emp.panImg}', '${emp.aadharFront}', '${emp.aadharBack}')">
+          <td>${emp.id}</td>
+          <td>${emp.name}</td>
+          <td>${emp.doj}</td>
+          <td>${emp.dob}</td>
+          <td>${emp.mobile}</td>
+          <td>${emp.pan}</td>
+          <td>${emp.aadhar}</td>
+          <td>Pending</td>
+          <td>
+            <button class="yes-btn">Yes</button>
+            <button class="no-btn">No</button>
+          </td>
+        </tr>`;
+        tbody.innerHTML += row;
+      });
+    }
+
+    function updateImagePreview(panImg, aadharFront, aadharBack) {
+      document.getElementById("panImage").src = panImg || "https://via.placeholder.com/200?text=No+Image";
+      document.getElementById("aadharFrontImage").src = aadharFront || "https://via.placeholder.com/200?text=No+Image";
+      document.getElementById("aadharBackImage").src = aadharBack || "https://via.placeholder.com/200?text=No+Image";
+    }
+
+    window.onload = function() { displayEmployees(employees); };
+  </script> {% endcomment %}
+
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script>
+  $(document).ready(function() {
+      $("#division").change(function() {
+          var divisionalid = $(this).val();
+          if (divisionalid) {
+              $.getJSON("/get-regions/", { divisionalid: divisionalid }, function(data) {
+                  $("#region").html('<option value="">Select Region</option>');
+                  $.each(data.regions, function(index, region) {
+                      $("#region").append('<option value="'+region.regionid+'">'+region.regionname+'</option>');
+                  });
+              });
+          }
+      });
+  
+      $("#region").change(function() {
+          var regionid = $(this).val();
+          if (regionid) {
+              $.getJSON("/get-units/", { regionid: regionid }, function(data) {
+                  $("#unit").html('<option value="">Select Unit</option>');
+                  $.each(data.units, function(index, unit) {
+                      $("#unit").append('<option value="'+unit.unitid+'">'+unit.unitname+'</option>');
+                  });
+              });
+          }
+      });
+
+  });
+  </script>
+
+  <script>
+    function fetchEmployees() {
+        var unit_id = document.getElementById("unitDropdown").value;
+        if (!unit_id) {
+            alert("Please select a unit ID.");
+            return;
+        }
+
+        $.ajax({
+            url: "/get-emp/",  // Change to your actual Django URL
+            type: "GET",
+            data: { unitid: unit_id },
+            success: function(response) {
+                var employees = response.employees;
+                var tableBody = $("#employeeTableBody");
+                tableBody.empty();  // Clear old data
+
+                if (employees.length === 0) {
+                    tableBody.append("<tr><td colspan='4'>No employees found</td></tr>");
+                } else {
+                    employees.forEach(function(emp) {
+                        tableBody.append(`
+                            <tr>
+                                <td>${emp.employee_id}</td>
+                                <td>${emp.first_name}</td>
+                                <td>${emp.DesigID}</td>
+                                <td>${emp.DeptID}</td>
+                            </tr>
+                        `);
+                    });
+                }
+            },
+            error: function() {
+                alert("Error fetching employees.");
+            }
+        });
+    }
+</script>
+    
+  
+</head>
+<body>
+  <div class="sidebar">
+    <img src="{% static 'logo.png' %}" alt="Company Logo">
+    <h3>HR Dashboard</h3>
+    <button class="nav-button active">Verification</button>
+    <button class="nav-button">Reports</button>
+  </div>
+
+  <div class="main-container">
+    <header><h2>Employee KYC Verification</h2></header>
+
+    <div class="filters">
+        <select id="division">
+            <option value="">Select Division</option>
+            {% for division in divisions %}
+            <option value="{{ division.divisionalid }}">{{ division.Divisionname }}</option>
+            {% endfor %}
+        </select>
+        
+        <select id="region">
+            <option value="">Select Region</option>
+        </select>
+        
+        <select id="unit">
+            <option value="">Select Unit</option>
+        </select>
+    </div>
+    <br>
+    <h1 style="text-align:center">Pending Data</h1>
+    <br>
+    <div class="content-container">
+      <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Emp ID</th>
+                    <th>Mobile</th>
+                    <th>AADHAR</th>
+                    <th>PAN</th>
+                    <th>DOB</th>
+                    <th>DOJ</th>
+                    <th>Verify</th>
+                </tr>
+            </thead>
+            <tbody id="employeeTableBody">
+                {% for e in emp %}
+                <tr>
+                    <td>{{e.EmpID}}</th>
+                    <td>{{e.MobileNo}}</td>
+                    <td>{{e.AdhaarNo}}</td>
+                    <td>{{e.PAN_Number}}</td>
+                    <td></td>
+                    <td></td>
+                    <td>
+                        <button class="yes-btn">Yes</button>
+                        <button class="no-btn">No</button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+      </div>
+
+      <div class="image-preview-container">
+        <h3>Document Preview</h3>
+        <div class="image-item"><img id="panImage" src=""></div>
+        <div class="image-item"><img id="aadharFrontImage" src=""></div>
+        <div class="image-item"><img id="aadharBackImage" src=""></div>
+      </div>
+    </div>
+    <br>
+    <h1 style="text-align:center">Completed Data</h1>
+    <br>
+    <div class="content-container">
+        <div class="table-container">
+          <table>
+              <thead>
+                  <tr>
+                    <th>Emp ID</th>
+                    <th>Mobile</th>
+                    <th>AADHAR</th>
+                    <th>PAN</th>
+                    <th>DOB</th>
+                    <th>DOJ</th>
+                  </tr>
+              </thead>
+              <tbody id="employeeTableBody">
+                  {% for e in emp %}
+                  <tr>
+                    <td>{{e.EmpID}}</th>
+                    <td>{{e.MobileNo}}</td>
+                    <td>{{e.AdhaarNo}}</td>
+                    <td>{{e.PAN_Number}}</td>
+                    <td></td>
+                    <td></td>
+                  </tr>
+                  {% endfor %}
+              </tbody>
+          </table>
+        </div>
+  
+        <div class="image-preview-container">
+          <h3>Document Preview</h3>
+          <div class="image-item"><img id="panImage" src=""></div>
+          <div class="image-item"><img id="aadharFrontImage" src=""></div>
+          <div class="image-item"><img id="aadharBackImage" src=""></div>
+        </div>
+    </div>
+  </div>
+</body>
+</html>
