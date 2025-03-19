@@ -152,10 +152,26 @@
           }
       });
 
+      $("#unit").change(function() {
+        var selectedUnitId = $(this).val();
+    
+        $.ajax({
+            url: "/get-emp/",  // Django View ka URL
+            type: "GET",  // Ya "POST" agar aap post request bhejna chahte hain
+            data: { unitid: selectedUnitId },  // Data jo bhejna hai
+            success: function(response) {
+                console.log("Response from server:", response);
+            },
+            error: function(error) {
+                console.log("Error:", error);
+            }
+        });
+      });
+
   });
   </script>
 
-  <script>
+  {% comment %} <script>
     function fetchEmployees() {
         var unit_id = document.getElementById("unitDropdown").value;
         if (!unit_id) {
@@ -192,16 +208,21 @@
             }
         });
     }
-</script>
+</script> {% endcomment %}
     
-  
+<script>
+  function goToReports() {
+      window.location.href = "/reports/";  // ✅ Replace with your actual page URL
+  }
+</script>
+
 </head>
 <body>
   <div class="sidebar">
     <img src="{% static 'logo.png' %}" alt="Company Logo">
     <h3>HR Dashboard</h3>
     <button class="nav-button active">Verification</button>
-    <button class="nav-button">Reports</button>
+    <button class="nav-button" onclick="goToReports()">Reports</button>
   </div>
 
   <div class="main-container">
@@ -240,21 +261,8 @@
                     <th>Verify</th>
                 </tr>
             </thead>
-            <tbody id="employeeTableBody">
-                {% for e in emp %}
-                <tr>
-                    <td>{{e.EmpID}}</th>
-                    <td>{{e.MobileNo}}</td>
-                    <td>{{e.AdhaarNo}}</td>
-                    <td>{{e.PAN_Number}}</td>
-                    <td></td>
-                    <td></td>
-                    <td>
-                        <button class="yes-btn">Yes</button>
-                        <button class="no-btn">No</button>
-                    </td>
-                </tr>
-                {% endfor %}
+            <tbody id="pendingemployeeTableBody">
+
             </tbody>
         </table>
       </div>
@@ -270,40 +278,176 @@
     <h1 style="text-align:center">Completed Data</h1>
     <br>
     <div class="content-container">
-        <div class="table-container">
-          <table>
-              <thead>
-                  <tr>
-                    <th>Emp ID</th>
-                    <th>Mobile</th>
-                    <th>AADHAR</th>
-                    <th>PAN</th>
-                    <th>DOB</th>
-                    <th>DOJ</th>
-                  </tr>
-              </thead>
-              <tbody id="employeeTableBody">
-                  {% for e in emp %}
-                  <tr>
-                    <td>{{e.EmpID}}</th>
-                    <td>{{e.MobileNo}}</td>
-                    <td>{{e.AdhaarNo}}</td>
-                    <td>{{e.PAN_Number}}</td>
-                    <td></td>
-                    <td></td>
-                  </tr>
-                  {% endfor %}
-              </tbody>
-          </table>
-        </div>
-  
-        <div class="image-preview-container">
-          <h3>Document Preview</h3>
-          <div class="image-item"><img id="panImage" src=""></div>
-          <div class="image-item"><img id="aadharFrontImage" src=""></div>
-          <div class="image-item"><img id="aadharBackImage" src=""></div>
-        </div>
+      <div class="table-container">
+        <table>
+            <thead>
+              <button id="refreshTable">Refresh Table</button>
+                <tr>
+                  <th>Emp ID</th>
+                  <th>Mobile</th>
+                  <th>AADHAR</th>
+                  <th>PAN</th>
+                  <th>DOB</th>
+                  <th>DOJ</th>
+
+                </tr>
+            </thead>
+            <tbody id="completedemployeeTableBody">
+                {% for e in emp %}
+                <tr>
+                  <td>{{e.EmpID}}</th>
+                  <td>{{e.MobileNo}}</td>
+                  <td>{{e.AdhaarNo}}</td>
+                  <td>{{e.PAN_Number}}</td>
+                  <td></td>
+                  <td></td>
+                </tr>
+                {% endfor %} 
+            </tbody>
+        </table>
+      </div>
+
+      <div class="image-preview-container">
+        <h3>Document Preview</h3>
+        <div class="image-item"><img id="panImage" src=""></div>
+        <div class="image-item"><img id="aadharFrontImage" src=""></div>
+        <div class="image-item"><img id="aadharBackImage" src=""></div>
+      </div>
     </div>
+
   </div>
+
+
+  {% comment %} <script>
+    $("#refreshTable").click(function() {
+        refreshCompletedEmployeeTable();
+    });
+</script> {% endcomment %}
+
+<script>
+  function refreshCompletedEmployeeTable() {
+      $.ajax({
+          url: "/get_completed_employees/", // ✅ API endpoint jo updated data dega
+          type: "GET",
+          dataType: "json",
+          success: function(response) {
+              console.log("Updated Employee Data:", response.employees);
+
+              var tableBody = $("#completedemployeeTableBody");
+              tableBody.empty();  // ✅ Old table rows clear karo
+
+              if (response.employees.length === 0) {
+                  tableBody.append("<tr><td colspan='6'>No employees found</td></tr>");
+              } else {
+                  $.each(response.employees, function(index, e) {
+                      tableBody.append(
+                          "<tr>" +
+                              "<td>" + e.EmpID + "</td>" +
+                              "<td>" + e.MobileNo + "</td>" +
+                              "<td>" + e.AdhaarNo + "</td>" +
+                              "<td>" + e.PAN_Number + "</td>" +
+                              "<td>" + e.DOB + "</td>" +
+                              "<td>" + e.DOJ + "</td>" +
+                          "</tr>"
+                      );
+                  });
+              }
+          },
+          error: function(xhr, status, error) {
+              console.log("Error refreshing table:", error);
+          }
+      });
+  }
+
+  // ✅ Call function every 30 seconds (optional)
+  setInterval(refreshCompletedEmployeeTable, 30000);
+</script>
+
+
+<script>
+    $("#refreshTable").click(function() {
+        refreshCompletedEmployeeTable();
+    });
+</script>
+
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+  $(document).ready(function() {
+    $("#unit").change(function() {
+        var unitid = $(this).val();
+        if (unitid) {
+            $.ajax({
+                url: "/get-emp/",
+                type: "GET",
+                data: { unitid: unitid },
+                dataType: "json",
+                success: function(response) {
+                    console.log("API Response:", response); // Debugging
+                    $("#pendingemployeeTableBody").empty(); // Clear old data
+
+                    var employees = response.employee_details;
+                    if (employees.length === 0) {
+                        $("#pendingemployeeTableBody").append("<tr><td colspan='4'>No employees found</td></tr>");
+                    } else {
+                        $.each(employees, function(index, emp) {
+                            $("#pendingemployeeTableBody").append(
+                                "<tr>" +
+                                    "<td>" + emp.EmpID + "</td>" +
+                                    "<td>" + emp.MobileNo + "</td>" +
+                                    "<td>" + emp.AdhaarNo + "</td>" +
+                                    "<td>" + emp.PAN_Number + "</td>" +
+                                    "<td>" + emp.dob + "</td>" +
+                                    "<td>" + emp.doj + "</td>" +
+                                    "<td>" +
+                                        "<button class='yes-btn' data-id='" + emp.EmpID + "'>Yes</button> " +
+                                        "<button class='no-btn' data-id='" + emp.EmpID + "'>No</button>" +
+                                    "</td>" +
+                                "</tr>"
+                            );
+                        });
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.log("Error:", error);
+                }
+            });
+        }
+    });
+
+    // Handle Yes Button Click
+    $(document).on("click", ".yes-btn", function() {
+        var empId = $(this).data("id");
+        var row = $(this).closest("tr"); // Get the row
+        $.ajax({
+          url: "/update-is-processed/",  // Django URL for updating
+          type: "POST",
+          data: { emp_id: empId },
+          headers: { "X-CSRFToken": "{{ csrf_token }}" },  // CSRF Token Required
+          success: function(response) {
+              if (response.status === "success") {
+                  alert("Employee ID: " + empId + " marked as processed!");
+                  row.remove(); //Remove row from table
+              } else {
+                  alert("Error: " + response.message);
+              }
+          },
+          error: function(xhr, status, error) {
+              alert("AJAX Error: " + error);
+          }
+      });
+        // Yahan aap AJAX call bhi kar sakte hain agar Yes ka action API me bhejna ho
+    });
+
+    // Handle No Button Click
+    $(document).on("click", ".no-btn", function() {
+        var empId = $(this).data("id");
+        alert("You clicked No for Employee ID: " + empId);
+        // Yahan bhi API request bhejna ho to add kar sakte hain
+    });
+
+});
+</script>
+
 </body>
 </html>
